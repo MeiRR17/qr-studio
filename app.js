@@ -1,5 +1,6 @@
 import { encodeQr, toSvg } from './src/qr.js';
 import { buildQrPayload } from './src/payloads.js';
+import { qrContrastAdvisory } from './src/contrast.js';
 const $=id=>document.getElementById(id);
 let encoded=null, currentSvg='';
 let revision=0; // Invalidate pending image exports when content or styling changes.
@@ -32,6 +33,14 @@ function selectContentType() {
 }
 
 function info(message,error=false){$('message').textContent=message;$('message').className=error?'message error':'message';}
+function updateContrast() {
+  const assessment=qrContrastAdvisory($('dark').value,$('light').value);
+  const message=$('contrast-advisory');
+  message.textContent=assessment.ratio.toFixed(2)+':1 — '+assessment.message;
+  message.className=assessment.recommended?'contrast-good':'contrast-warning';
+  $('reset-colors').hidden=assessment.recommended;
+}
+
 function refreshBytes(){
   try {
     const count = new TextEncoder().encode(payload()).length;
@@ -91,8 +100,21 @@ $('wifi-security').addEventListener('change', () => {
   changedInput();
 });
 for(const id of ['dark','light','scale']){
-  $(id).addEventListener('change',()=>{if(encoded)generate();});
+  $(id).addEventListener('change',()=>{
+    if(id!=='scale')updateContrast();
+    if(encoded)generate();
+  });
 }
+for(const id of ['dark','light']){
+  $(id).addEventListener('input',updateContrast);
+}
+$('reset-colors').addEventListener('click',()=>{
+  $('dark').value='#111827';
+  $('light').value='#ffffff';
+  updateContrast();
+  if(encoded)generate();
+  else info('Colors reset. Generate a QR code to use the reliable palette.');
+});
 $('svg').addEventListener('click',()=>{if(currentSvg)save(currentSvg,'qr-studio.svg','image/svg+xml;charset=utf-8');});
 $('png').addEventListener('click',()=>{
   if(!currentSvg || !encoded)return;
@@ -131,4 +153,5 @@ $('png').addEventListener('click',()=>{
 });
 $('payload').value='https://github.com/MeiRR17';
 selectContentType();
+updateContrast();
 generate();
