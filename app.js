@@ -1,11 +1,45 @@
 import { encodeQr, toSvg } from './src/qr.js';
+import { buildQrPayload } from './src/payloads.js';
 const $=id=>document.getElementById(id);
 let encoded=null, currentSvg='';
-const size=()=>new TextEncoder().encode($('payload').value).length;
+const contentType = $('content-type');
+function payload() {
+  switch (contentType.value) {
+    case 'text': return buildQrPayload('text', {text:$('payload').value});
+    case 'wifi': return buildQrPayload('wifi', {
+      ssid:$('wifi-ssid').value,
+      password:$('wifi-password').value,
+      security:$('wifi-security').value,
+      hidden:$('wifi-hidden').checked,
+    });
+    case 'email': return buildQrPayload('email', {
+      recipient:$('email-to').value,
+      subject:$('email-subject').value,
+      body:$('email-body').value,
+    });
+    default: throw new RangeError('Invalid content type.');
+  }
+}
+function selectContentType() {
+  $('free-form').hidden = contentType.value !== 'text';
+  $('wifi-form').hidden = contentType.value !== 'wifi';
+  $('email-form').hidden = contentType.value !== 'email';
+  $('wifi-password-wrap').hidden = $('wifi-security').value === 'nopass';
+  discard();
+  refreshBytes();
+  info('Content type changed. Generate a new QR when ready.');
+}
+
 function info(message,error=false){$('message').textContent=message;$('message').className=error?'message error':'message';}
 function refreshBytes(){
-  const count=size();$('bytes').textContent=count+' / 78 bytes';
-  $('bytes').className=count>78?'over-limit':'';
+  try {
+    const count = new TextEncoder().encode(payload()).length;
+    $('bytes').textContent=count+' / 78 bytes';
+    $('bytes').className=count>78?'over-limit':'';
+  } catch {
+    $('bytes').textContent='— / 78 bytes';
+    $('bytes').className='';
+  }
 }
 function discard(){
   encoded=null;currentSvg='';$('svg').disabled=$('png').disabled=true;
@@ -13,7 +47,7 @@ function discard(){
 }
 function generate(){
   try{
-    encoded=encodeQr($('payload').value);
+    encoded=encodeQr(payload());
     currentSvg=toSvg(encoded,{
       scale:Number($('scale').value),dark:$('dark').value,light:$('light').value,
     });
@@ -37,8 +71,19 @@ function save(data,name,type){
   setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 $('generate').addEventListener('click',generate);
-$('payload').addEventListener('input',()=>{
-  refreshBytes();discard();info('Content changed. Generate the updated QR code.');
+function changedInput() {
+  refreshBytes();
+  discard();
+  info('Content changed. Generate the updated QR code.');
+}
+contentType.addEventListener('change', selectContentType);
+for(const id of ['payload','wifi-ssid','wifi-password','wifi-hidden','wifi-security',
+  'email-to','email-subject','email-body']) {
+  $(id).addEventListener('input', changedInput);
+}
+$('wifi-security').addEventListener('change', () => {
+  $('wifi-password-wrap').hidden = $('wifi-security').value === 'nopass';
+  changedInput();
 });
 for(const id of ['dark','light','scale']){
   $(id).addEventListener('change',()=>{if(encoded)generate();});
@@ -63,4 +108,5 @@ $('png').addEventListener('click',()=>{
   image.src=url;
 });
 $('payload').value='https://github.com/MeiRR17';
-refreshBytes();generate();
+selectContentType();
+generate();
