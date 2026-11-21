@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#121d31">
+<meta name="description" content="Generate QR codes offline, without a library or upload. Export SVG or PNG.">
+<title>QR Studio — Private QR codes</title>
+<link rel="stylesheet" href="./styles.css"><script type="module" src="./app.js"></script>
+</head>
+<body>
+<header class="top"><a class="brand" href="./"><span class="brandmark">▦</span><strong>qr<span>studio</span></strong><small>offline designer</small></a><a href="https://github.com/MeiRR17/qr-studio" target="_blank" rel="noopener noreferrer">GitHub ↗</a></header>
+<main class="shell">
+  <div class="intro"><div class="eyebrow">SECURE · PRIVATE · NO LIBRARIES</div><h1>Your QR code. <em>Your data.</em></h1><p>Create a clean, scannable QR code from text or a short URL. Encoding happens in your browser; nothing gets uploaded.</p></div>
+  <div class="workspace">
+    <section class="panel options">
+      <div class="panel-heading"><span class="step">01</span><div><h2>What should the QR contain?</h2><p>Enter a URL or plain text.</p></div></div>
+      <label for="payload" class="field-label">Content</label>
+      <textarea id="payload" rows="6" spellcheck="false" placeholder="https://example.org" maxlength="300"></textarea>
+      <div class="byte-row"><span>UTF-8 payload</span><span id="bytes">0 / 78 bytes</span></div>
+      <p class="hint">Supports up to 78 UTF-8 bytes, including URLs and non-Latin text. Longer content cannot be encoded in this initial version.</p>
+      <hr>
+      <div class="panel-heading section-two"><span class="step">02</span><div><h2>Customize</h2><p>Use high-contrast colors for reliable scanning.</p></div></div>
+      <div class="controls">
+        <label>Foreground <input id="dark" type="color" value="#111827"></label>
+        <label>Background <input id="light" type="color" value="#ffffff"></label>
+        <label>Module size <select id="scale"><option value="8">Small</option><option value="10" selected>Medium</option><option value="16">Large</option><option value="24">Extra large</option></select></label>
+      </div>
+      <button id="generate" type="button" class="button primary">Generate QR code →</button>
+      <p id="message" class="message" role="status" aria-live="polite"></p>
+    </section>
+    <section class="panel preview">
+      <div class="preview-head"><div><span class="section-label">LIVE PREVIEW</span><h2>Your QR code</h2></div><span class="privacy">◈ Generated locally</span></div>
+      <div class="stage" id="stage"><div class="empty"><span class="empty-icon">▦</span><h3>Your design appears here</h3><p>Enter content and select Generate.</p></div></div>
+      <div class="meta"><span>Version <strong id="version">—</strong></span><span>Correction <strong id="level">L</strong></span><span>Size <strong id="dimensions">—</strong></span></div>
+      <div class="download"><button type="button" class="button secondary" id="svg" disabled>↓ Download SVG</button><button type="button" class="button secondary" id="png" disabled>↓ Download PNG</button></div>
+      <p class="preview-note">QR codes need a clear four-module white margin. The exporter includes it automatically. Test the result with a camera before distributing widely.</p>
+    </section>
+  </div>
+  <section class="features"><article><span>◇</span><h3>Real QR encoding</h3><p>Byte-mode encoding, Reed–Solomon error correction and all eight standard data masks.</p></article><article><span>◈</span><h3>No remote service</h3><p>No account, tracking, external library or server-side generation.</p></article><article><span>↧</span><h3>Ready to share</h3><p>Export a scalable vector or high-resolution PNG with crisp edges.</p></article></section>
+</main>
+<footer><span>QR Studio · Open-source developer tool</span><span>Built by <a href="https://github.com/MeiRR17" target="_blank" rel="noopener noreferrer">Meir Dvir</a></span></footer>
+</body>
+</html>
