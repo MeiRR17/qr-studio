@@ -33,7 +33,9 @@ Use a dark foreground and light background for best camera compatibility; custom
 
 ## Privacy
 
-Input is encoded entirely in JavaScript in your browser; no content is transmitted to a server. **A Wi-Fi QR code contains credentials as recoverable plaintext.** Anyone with a copy of the code may retrieve the network password. Do not publish Wi-Fi QR codes publicly for private networks. Save or share image files with the same care as the credentials themselves. The app does not save your input in localStorage, cookies or analytics. When the content or QR type changes, the old QR preview is immediately removed, including any earlier network credentials. Pending PNG image conversions are cancelled when the generated content or styling changes, preventing accidental export of a superseded QR. If you publish the static files on a remote host, your browser still downloads those public files as with any website.
+Input is encoded entirely in JavaScript in your browser; no content is transmitted to a server. **A Wi-Fi QR code contains credentials as recoverable plaintext.** Anyone with a copy of the code may retrieve the network password. Do not publish Wi-Fi QR codes publicly for private networks. Save or share image files with the same care as the credentials themselves. Color pickers now redraw the generated QR immediately when a color changes (including live drag updates), rather than only on the final color-change event. SVG/PNG exports always use the currently displayed palette, and asynchronous PNG conversions remain tied to their original preview revision.
+
+The app does not save your input in localStorage, cookies or analytics. When the content or QR type changes, the old QR preview is immediately removed, including any earlier network credentials. Pending PNG image conversions are cancelled when the generated content or styling changes, preventing accidental export of a superseded QR. If you publish the static files on a remote host, your browser still downloads those public files as with any website.
 
 ## Files
 
