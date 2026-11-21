@@ -2,6 +2,7 @@ import { encodeQr, toSvg } from './src/qr.js';
 import { buildQrPayload } from './src/payloads.js';
 const $=id=>document.getElementById(id);
 let encoded=null, currentSvg='';
+let revision=0; // Invalidate pending image exports when content or styling changes.
 const contentType = $('content-type');
 function payload() {
   switch (contentType.value) {
@@ -42,7 +43,10 @@ function refreshBytes(){
   }
 }
 function discard(){
+  revision++;
   encoded=null;currentSvg='';$('svg').disabled=$('png').disabled=true;
+  // A stale preview may expose a prior Wi-Fi password even with export disabled.
+  $('stage').replaceChildren();
   $('version').textContent=$('dimensions').textContent='—';
 }
 function generate(){
@@ -52,6 +56,7 @@ function generate(){
       scale:Number($('scale').value),dark:$('dark').value,light:$('light').value,
     });
     $('stage').innerHTML=currentSvg;
+    revision++;
     $('version').textContent=encoded.version;
     $('level').textContent=encoded.level+' (~7%)';
     $('dimensions').textContent=encoded.size+' × '+encoded.size+' modules';
@@ -90,21 +95,38 @@ for(const id of ['dark','light','scale']){
 }
 $('svg').addEventListener('click',()=>{if(currentSvg)save(currentSvg,'qr-studio.svg','image/svg+xml;charset=utf-8');});
 $('png').addEventListener('click',()=>{
-  if(!currentSvg)return;
-  const blob=new Blob([currentSvg],{type:'image/svg+xml'});
+  if(!currentSvg || !encoded)return;
+  // Snapshot the exact QR being exported. Do not consult mutable global state
+  // inside asynchronous Image / canvas callbacks.
+  const capturedSvg=currentSvg;
+  const capturedRevision=revision;
+  const pixels=(encoded.size+8)*Number($('scale').value);
+  const blob=new Blob([capturedSvg],{type:'image/svg+xml'});
   const url=URL.createObjectURL(blob);
   const image=new Image();
   image.onload=()=>{
+    URL.revokeObjectURL(url);
+    if(capturedRevision!==revision)return;
     try{
       const canvas=document.createElement('canvas');
-      canvas.width=canvas.height=encoded.size*Number($('scale').value)+8*Number($('scale').value);
+      canvas.width=canvas.height=pixels;
       const context=canvas.getContext('2d');
-      context.imageSmoothingEnabled=false;context.drawImage(image,0,0,canvas.width,canvas.height);
-      canvas.toBlob(png=>{if(!png){info('PNG rendering failed.',true);return;}
-        save(png,'qr-studio.png','image/png');},'image/png');
-    }finally{URL.revokeObjectURL(url);}
+      if(!context)throw new Error('Canvas rendering is unavailable.');
+      context.imageSmoothingEnabled=false;
+      context.drawImage(image,0,0,pixels,pixels);
+      canvas.toBlob(png=>{
+        if(capturedRevision!==revision)return;
+        if(!png){info('PNG rendering failed.',true);return;}
+        save(png,'qr-studio.png','image/png');
+      },'image/png');
+    }catch(error){
+      info('PNG export failed: '+(error?.message||'Cannot render image.'),true);
+    }
   };
-  image.onerror=()=>{URL.revokeObjectURL(url);info('The browser could not render this SVG.',true);};
+  image.onerror=()=>{
+    URL.revokeObjectURL(url);
+    if(capturedRevision===revision)info('The browser could not render this SVG.',true);
+  };
   image.src=url;
 });
 $('payload').value='https://github.com/MeiRR17';
