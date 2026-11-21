@@ -17,6 +17,7 @@ Open http://localhost:8000. A local HTTP server or HTTPS static hosting supports
 - Reed–Solomon error correction over GF(256), finder/timing/alignment patterns, BCH-encoded format information, and all eight QR data masks selected using a penalty heuristic.
 - Mandatory four-module quiet zone in exported images.
 - Color picker, module scale selector, SVG and PNG exports, and byte-count feedback.
+- Local color-legibility estimate computed from sRGB relative luminance and contrast, including an inversion warning and a one-click return to high-contrast defaults. This is only a heuristic, not an ISO QR-scanning certification.
 - Structured Wi-Fi QR payloads with security type (WPA/WPA2, WEP or open), optional hidden SSID, and proper escaping for delimiters.
 - Email QR payloads using a `mailto:` URI with an optional encoded subject and body. Recipient validation accepts a deliberately conservative, mailto-safe address subset (no query/fragment separators) to avoid injected URI parameters; unusual email syntaxes may be rejected.
 - The 78-byte limit applies to the **entire encoded payload**, including Wi-Fi/email protocol prefixes and escaping, not just the visible input fields.
@@ -26,7 +27,7 @@ Open http://localhost:8000. A local HTTP server or HTTPS static hosting supports
 
 This first implementation intentionally supports **only short UTF-8 strings**, not structured append, binary-file import, Kanji mode or higher QR versions. Multibyte Unicode characters consume more than one byte. The PNG converter uses your browser's canvas and does not upload data.
 
-Use a dark foreground and light background for best camera compatibility; custom colors can make QR codes unreadable. Wi-Fi and email recognition depends on the scanner and its OS; results are not guaranteed across all camera apps. Always scan a generated QR code with a camera before printing or circulating it widely.
+Use a dark foreground and light background for best camera compatibility; custom colors can make QR codes unreadable. The on-screen color advisory recommends a dark foreground and a contrast ratio of at least 4.5:1 as a conservative legibility heuristic, not a universal QR standard or guarantee. Users can still choose other palettes; always test the resulting file on the intended devices. Wi-Fi and email recognition depends on the scanner and its OS; results are not guaranteed across all camera apps. Always scan a generated QR code with a camera before printing or circulating it widely.
 
 **Validation has not been performed**. The owner requested implementation-only changes; QR interoperability should be checked during the consolidated validation round before any public release.
 
@@ -38,6 +39,7 @@ Input is encoded entirely in JavaScript in your browser; no content is transmitt
 
 - `src/qr.js` — byte-mode encoder, Reed–Solomon codewords, QR matrix placement and SVG export
 - `src/payloads.js` — local Wi-Fi and email QR content builders (no networking)
+- `src/contrast.js` — isolated palette contrast advisory and accessibility-friendly warnings
 - `index.html` — browser interface
 - `app.js` — local input, preview and SVG/PNG download
 - `styles.css` — responsive styling
