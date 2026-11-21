@@ -22,11 +22,13 @@ function wifiEscape(value) {
 export function wifiPayload({ssid, password = '', security = 'WPA', hidden = false}) {
   const name = field(ssid, 'Network name', 80);
   if (!name.length) throw new RangeError('Wi-Fi network name is required.');
+  if (/[\r\n]/u.test(name)) throw new RangeError('Wi-Fi SSID cannot contain line breaks.');
   if (!['WPA', 'WEP', 'nopass'].includes(security)) {
     throw new RangeError('Select WPA/WPA2, WEP or an open network.');
   }
   if (typeof hidden !== 'boolean') throw new TypeError('Hidden network must be boolean.');
   const credentials = security === 'nopass' ? '' : field(password, 'Wi-Fi password', 120);
+  if (/[\r\n]/u.test(credentials)) throw new RangeError('Wi-Fi password cannot contain line breaks.');
   if (security !== 'nopass' && !credentials.length) {
     throw new RangeError('Enter the Wi-Fi password for a protected network.');
   }
@@ -38,7 +40,11 @@ export function wifiPayload({ssid, password = '', security = 'WPA', hidden = fal
 /** Standard mailto URI; the recipient is validated without attempting to deliver mail. */
 export function emailPayload({recipient, subject = '', body = ''}) {
   const address = field(recipient, 'Email recipient', 120).trim();
-  if (!/^[^\s@<>:,;]+@[^\s@<>:,;]+\.[^\s@<>:,;]+$/u.test(address)) {
+  // This deliberately narrow mailto-safe subset excludes ? and #, which
+  // would otherwise inject query/fragment data into the final URI.
+  // More exotic valid email addresses are intentionally not supported.
+  if (!/^[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+$/u.test(address) ||
+      address.split('@')[1].split('.').some(part => part.startsWith('-') || part.endsWith('-'))) {
     throw new RangeError('Enter a valid email address.');
   }
   const topic = field(subject, 'Email subject', 120);
