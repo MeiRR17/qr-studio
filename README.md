@@ -18,7 +18,7 @@ Open http://localhost:8000. A local HTTP server or HTTPS static hosting supports
 - Mandatory four-module quiet zone in exported images.
 - Color picker, module scale selector, SVG and PNG exports, and byte-count feedback.
 - Structured Wi-Fi QR payloads with security type (WPA/WPA2, WEP or open), optional hidden SSID, and proper escaping for delimiters.
-- Email QR payloads using a `mailto:` URI with an optional encoded subject and body.
+- Email QR payloads using a `mailto:` URI with an optional encoded subject and body. Recipient validation accepts a deliberately conservative, mailto-safe address subset (no query/fragment separators) to avoid injected URI parameters; unusual email syntaxes may be rejected.
 - The 78-byte limit applies to the **entire encoded payload**, including Wi-Fi/email protocol prefixes and escaping, not just the visible input fields.
 - Library API: `encodeQr(text)` returns a matrix; `toSvg(result, options)` creates standalone SVG.
 
@@ -32,7 +32,7 @@ Use a dark foreground and light background for best camera compatibility; custom
 
 ## Privacy
 
-Input is encoded entirely in JavaScript in your browser; no content is transmitted to a server. **A Wi-Fi QR code contains credentials as recoverable plaintext.** Anyone with a copy of the code may retrieve the network password. Do not publish Wi-Fi QR codes publicly for private networks. Save or share image files with the same care as the credentials themselves. The app does not save your input in localStorage, cookies or analytics. If you publish the static files on a remote host, your browser still downloads those public files as with any website.
+Input is encoded entirely in JavaScript in your browser; no content is transmitted to a server. **A Wi-Fi QR code contains credentials as recoverable plaintext.** Anyone with a copy of the code may retrieve the network password. Do not publish Wi-Fi QR codes publicly for private networks. Save or share image files with the same care as the credentials themselves. The app does not save your input in localStorage, cookies or analytics. When the content or QR type changes, the old QR preview is immediately removed, including any earlier network credentials. Pending PNG image conversions are cancelled when the generated content or styling changes, preventing accidental export of a superseded QR. If you publish the static files on a remote host, your browser still downloads those public files as with any website.
 
 ## Files
 
