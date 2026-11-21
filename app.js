@@ -65,6 +65,7 @@ function generate(){
       scale:Number($('scale').value),dark:$('dark').value,light:$('light').value,
     });
     $('stage').innerHTML=currentSvg;
+    lastRenderedStyle=[$('dark').value,$('light').value,$('scale').value].join('|');
     revision++;
     $('version').textContent=encoded.version;
     $('level').textContent=encoded.level+' (~7%)';
@@ -99,21 +100,26 @@ $('wifi-security').addEventListener('change', () => {
   $('wifi-password-wrap').hidden = $('wifi-security').value === 'nopass';
   changedInput();
 });
-for(const id of ['dark','light','scale']){
-  $(id).addEventListener('change',()=>{
-    if(id!=='scale')updateContrast();
-    if(encoded)generate();
-  });
+// A color picker fires "input" continuously before "change". Redraw on
+// every change to the actual color value, so downloadable QR artwork can
+// never lag behind the foreground/background shown in the controls.
+let lastRenderedStyle='';
+function refreshStyle() {
+  updateContrast();
+  const style=[$('dark').value,$('light').value,$('scale').value].join('|');
+  if (!encoded || style === lastRenderedStyle) return;
+  generate();
 }
 for(const id of ['dark','light']){
-  $(id).addEventListener('input',updateContrast);
+  $(id).addEventListener('input',refreshStyle);
+  $(id).addEventListener('change',refreshStyle);
 }
+$('scale').addEventListener('change',refreshStyle);
 $('reset-colors').addEventListener('click',()=>{
   $('dark').value='#111827';
   $('light').value='#ffffff';
-  updateContrast();
-  if(encoded)generate();
-  else info('Colors reset. Generate a QR code to use the reliable palette.');
+  refreshStyle();
+  if(!encoded)info('Colors reset. Generate a QR code to use the reliable palette.');
 });
 $('svg').addEventListener('click',()=>{if(currentSvg)save(currentSvg,'qr-studio.svg','image/svg+xml;charset=utf-8');});
 $('png').addEventListener('click',()=>{
