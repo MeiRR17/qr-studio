@@ -55,9 +55,28 @@ export function emailPayload({recipient, subject = '', body = ''}) {
   return 'mailto:' + address + (query.length ? '?' + query.join('&') : '');
 }
 
+/**
+ * Portable telephone URI for QR scanners. Only accepts conservative
+ * international E.164 numbers or Israeli 0-prefixed local dialing numbers.
+ * Formatting spaces, parentheses and hyphens are discarded; extension,
+ * fragment and query delimiters are never accepted.
+ */
+export function phonePayload({number}) {
+  const entered = field(number, 'Phone number', 40).trim();
+  if (!entered || /[^+0-9 ()-]/u.test(entered)) {
+    throw new RangeError('Enter a phone number without extensions or URI parameters.');
+  }
+  const normalized = entered.replace(/[ ()-]/gu, '');
+  if (!/^(?:\+[1-9]\d{1,14}|0\d{8,9})$/u.test(normalized)) {
+    throw new RangeError('Use a +country-code number (E.164) or an Israeli local number beginning with 0.');
+  }
+  return 'tel:' + normalized;
+}
+
 export function buildQrPayload(kind, values) {
   if (kind === 'text') return field(values?.text, 'Text', 2000);
   if (kind === 'wifi') return wifiPayload(values);
   if (kind === 'email') return emailPayload(values);
+  if (kind === 'phone') return phonePayload(values);
   throw new RangeError('Unsupported QR content type.');
 }

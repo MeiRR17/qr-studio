@@ -19,6 +19,9 @@ function payload() {
       subject:$('email-subject').value,
       body:$('email-body').value,
     });
+    case 'phone': return buildQrPayload('phone', {
+      number:$('phone-number').value,
+    });
     default: throw new RangeError('Invalid content type.');
   }
 }
@@ -26,6 +29,7 @@ function selectContentType() {
   $('free-form').hidden = contentType.value !== 'text';
   $('wifi-form').hidden = contentType.value !== 'wifi';
   $('email-form').hidden = contentType.value !== 'email';
+  $('phone-form').hidden = contentType.value !== 'phone';
   $('wifi-password-wrap').hidden = $('wifi-security').value === 'nopass';
   discard();
   refreshBytes();
@@ -93,7 +97,7 @@ function changedInput() {
 }
 contentType.addEventListener('change', selectContentType);
 for(const id of ['payload','wifi-ssid','wifi-password','wifi-hidden','wifi-security',
-  'email-to','email-subject','email-body']) {
+  'email-to','email-subject','email-body','phone-number']) {
   $(id).addEventListener('input', changedInput);
 }
 $('wifi-security').addEventListener('change', () => {
