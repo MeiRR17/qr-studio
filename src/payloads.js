@@ -110,6 +110,31 @@ export function geoPayload({latitude, longitude}) {
     coordinate(longitude, 'Longitude', -180, 180);
 }
 
+/**
+ * Compact MECARD contact card. The first 4 QR versions support just 78 bytes;
+ * callers should use short names and one or two short contact fields.
+ *
+ * MECARD values escape backslash and structural delimiters to prevent
+ * one user field from injecting a second contact-card field.
+ * Scanner adoption is app-dependent. QR contents are publicly recoverable.
+ */
+export function contactPayload({name, phone = '', email = ''}) {
+  const fullName = field(name, 'Contact name', 120).trim();
+  if (!fullName || /[\r\n]/u.test(fullName)) {
+    throw new RangeError('Enter a single-line contact name.');
+  }
+  const phoneValue = field(phone, 'Contact phone', 40).trim();
+  const emailValue = field(email, 'Contact email', 120).trim();
+  const number = phoneValue ? normalizedPhone(phoneValue) : '';
+  // Reuse the conservative recipient syntax: mailto query/fragment delimiters
+  // cannot be smuggled into a MECARD email field.
+  const address = emailValue ? emailPayload({ recipient: emailValue }).slice('mailto:'.length) : '';
+  const escape = value => value.replace(/[\\;,:]/gu, character => '\\' + character);
+  return 'MECARD:N:' + escape(fullName) + ';' +
+    (number ? 'TEL:' + number + ';' : '') +
+    (address ? 'EMAIL:' + escape(address) + ';' : '') + ';';
+}
+
 export function buildQrPayload(kind, values) {
   if (kind === 'text') return field(values?.text, 'Text', 2000);
   if (kind === 'wifi') return wifiPayload(values);
@@ -117,5 +142,6 @@ export function buildQrPayload(kind, values) {
   if (kind === 'phone') return phonePayload(values);
   if (kind === 'sms') return smsPayload(values);
   if (kind === 'geo') return geoPayload(values);
+  if (kind === 'contact') return contactPayload(values);
   throw new RangeError('Unsupported QR content type.');
 }
