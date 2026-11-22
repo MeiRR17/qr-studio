@@ -14,6 +14,7 @@ Open http://localhost:8000. A local HTTP server or HTTPS static hosting supports
 
 - UTF-8 byte-mode encoding for QR Code **versions 1–4** at error correction level **L** (approximately 7% codeword recovery under typical error conditions).
 - Maximum UTF-8 payload sizes: v1 17 bytes, v2 32 bytes, v3 53 bytes, v4 78 bytes.
+- **Live QR capacity preflight:** before generation, the interface shows the smallest expected supported version (`1–4`, level L) and how many UTF-8 bytes remain within that version's actual capacity. For oversized content it shows the exact byte count exceeding v4-L's 78-byte ceiling. Structured content counts all protocol prefixes and escaping by using its final built payload. Invalid or incomplete content reports an unavailable estimate instead of guessing. It does not store or display entered secrets, construct a matrix, or require a scanner/camera/network permission. The generated QR still needs practical scanner verification.
 - Reed–Solomon error correction over GF(256), finder/timing/alignment patterns, BCH-encoded format information, and all eight QR data masks selected using a penalty heuristic.
 - Mandatory four-module quiet zone in exported images.
 - Color picker, module scale selector, SVG and PNG exports, and byte-count feedback.
@@ -26,7 +27,7 @@ Open http://localhost:8000. A local HTTP server or HTTPS static hosting supports
 - Telephone call QR payloads using a `tel:` URI. Accepts conservatively normalized international E.164 (`+` and up to 15 digits) or local Israeli 0-prefixed 9–10-digit numbers. Removes spaces, hyphens and parentheses; rejects extensions, URI query/fragment markers and control characters. A QR does not check that a number is allocated or reachable.
 - Email QR payloads using a `mailto:` URI with an optional encoded subject and body. Recipient validation accepts a deliberately conservative, mailto-safe address subset (no query/fragment separators) to avoid injected URI parameters; unusual email syntaxes may be rejected.
 - The 78-byte limit applies to the **entire encoded payload**, including Wi-Fi/email protocol prefixes and escaping, not just the visible input fields.
-- Library API: `encodeQr(text)` returns a matrix; `toSvg(result, options)` creates standalone SVG.
+- Library API: `qrCapacityInfo(text)` returns only byte counts, smallest supported version, free capacity and overage (never the input text); `encodeQr(text)` returns a matrix; `toSvg(result, options)` creates standalone SVG. The capacity preview and encoder now use the same version-selection rule.
 
 ## Limitations
 
@@ -44,7 +45,7 @@ The app does not save your input in localStorage, cookies or analytics. When the
 
 ## Files
 
-- `src/qr.js` — byte-mode encoder, Reed–Solomon codewords, QR matrix placement and SVG export
+- `src/qr.js` — byte-mode capacity preflight, encoder, Reed–Solomon codewords, QR matrix placement and SVG export
 - `src/payloads.js` — local Wi-Fi, email, telephone, SMS, geographic-location and MECARD contact QR content builders (no networking)
 - `src/contrast.js` — isolated palette contrast advisory and accessibility-friendly warnings
 - `index.html` — browser interface

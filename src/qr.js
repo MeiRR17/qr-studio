@@ -11,6 +11,36 @@ const CAPACITY = [
   { data: 80, ecc: 20 },
 ];
 
+const QR_VERSIONS = Object.freeze([1, 2, 3, 4]);
+const MAX_PAYLOAD_BYTES = CAPACITY[4].data - 2;
+const capacityBytes = version => CAPACITY[version].data - 2;
+const versionForBytes = byteCount =>
+  QR_VERSIONS.find(version => byteCount <= capacityBytes(version)) ?? null;
+
+/**
+ * Capacity preview without constructing a QR matrix or exposing the payload.
+ * Uses the identical byte-mode version rule as encodeQr() and counts UTF-8,
+ * not UTF-16 characters. The selected version is a prediction, not proof
+ * that a camera can decode the generated image.
+ */
+export function qrCapacityInfo(input) {
+  if (typeof input !== 'string') throw new TypeError('QR payload must be text.');
+  if (input.length > 10_000) throw new RangeError('QR capacity input is too long.');
+  const bytes = new TextEncoder().encode(input).length;
+  const version = bytes ? versionForBytes(bytes) : null;
+  return {
+    bytes,
+    maxBytes: MAX_PAYLOAD_BYTES,
+    fits: version !== null,
+    empty: bytes === 0,
+    version,
+    versionCapacityBytes: version === null ? null : capacityBytes(version),
+    remainingBytes: version === null ? null : capacityBytes(version) - bytes,
+    overflowBytes: bytes > MAX_PAYLOAD_BYTES ? bytes - MAX_PAYLOAD_BYTES : 0,
+    level: 'L',
+  };
+}
+
 function multiply(x, y) {
   let z = 0;
   for (let i = 7; i >= 0; i--) {
@@ -186,7 +216,7 @@ function cloneModules(modules){return modules.map(row=>row.slice());}
 export function encodeQr(input) {
   if(typeof input!=='string'||!input.length)throw new TypeError('Enter nonempty text.');
   const bytes=new TextEncoder().encode(input);
-  const version=[1,2,3,4].find(v=>bytes.length+2<=CAPACITY[v].data); // mode + length + terminator fit
+  const version=versionForBytes(bytes.length); // shared with capacity preflight
   if(!version)throw new RangeError('Text exceeds the version 4-L capacity (78 UTF-8 bytes).');
   const codewords=encodeData(bytes,version);
   const grid=matrix(version);

@@ -1,4 +1,4 @@
-import { encodeQr, toSvg } from './src/qr.js';
+import { encodeQr, toSvg, qrCapacityInfo } from './src/qr.js';
 import { buildQrPayload } from './src/payloads.js';
 import { qrContrastAdvisory } from './src/contrast.js';
 const $=id=>document.getElementById(id);
@@ -62,13 +62,25 @@ function updateContrast() {
 }
 
 function refreshBytes(){
+  const advisory=$('capacity-advisory');
   try {
-    const count = new TextEncoder().encode(payload()).length;
-    $('bytes').textContent=count+' / 78 bytes';
-    $('bytes').className=count>78?'over-limit':'';
+    const estimate=qrCapacityInfo(payload());
+    $('bytes').textContent=estimate.bytes+' / '+estimate.maxBytes+' bytes';
+    $('bytes').className=estimate.overflowBytes?'over-limit':'';
+    if(estimate.empty){
+      advisory.textContent='Enter content to estimate QR version and capacity.';
+    } else if(estimate.overflowBytes){
+      advisory.textContent='Too long for byte-mode version 4-L by '+
+        estimate.overflowBytes+' UTF-8 byte(s). Shorten the content to generate a QR.';
+    } else {
+      advisory.textContent='Expected version '+estimate.version+'-L · '+
+        estimate.remainingBytes+' byte(s) free within its '+
+        estimate.versionCapacityBytes+'-byte capacity. Scanner support is not guaranteed.';
+    }
   } catch {
     $('bytes').textContent='— / 78 bytes';
     $('bytes').className='';
+    advisory.textContent='Complete valid content fields to estimate the QR version.';
   }
 }
 function discard(){
