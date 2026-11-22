@@ -13,7 +13,7 @@
   <div class="intro"><div class="eyebrow">SECURE · PRIVATE · NO LIBRARIES</div><h1>Your QR code. <em>Your data.</em></h1><p>Create a clean, scannable QR code from text or a short URL. Encoding happens in your browser; nothing gets uploaded.</p></div>
   <div class="workspace">
     <section class="panel options">
-      <div class="panel-heading"><span class="step">01</span><div><h2>What should the QR contain?</h2><p>Create plain text, Wi-Fi, email, telephone or SMS QR payloads.</p></div></div>
+      <div class="panel-heading"><span class="step">01</span><div><h2>What should the QR contain?</h2><p>Create plain text, Wi-Fi, email, telephone, SMS or location QR payloads.</p></div></div>
       <label for="content-type" class="field-label">QR content type</label>
       <select id="content-type" class="payload-select" aria-describedby="content-hint">
         <option value="text">Plain text or URL</option>
@@ -21,6 +21,7 @@
         <option value="email">Email message</option>
         <option value="phone">Telephone call</option>
         <option value="sms">Text message (SMS)</option>
+        <option value="geo">Geographic location</option>
       </select>
       <div id="free-form" class="payload-fields">
         <label for="payload" class="field-label">Content</label>
@@ -54,6 +55,13 @@
         <label for="sms-body" class="field-label">Message (optional)</label>
         <textarea id="sms-body" rows="3" maxlength="250" placeholder="Short SMS text"></textarea>
         <p class="hint">Scanning may open an SMS composer but does not send a message. A message can push the QR beyond 78 bytes.</p>
+      </div>
+      <div id="geo-form" class="payload-fields" hidden>
+        <label for="geo-latitude" class="field-label">Latitude (−90 to 90)</label>
+        <input id="geo-latitude" type="text" inputmode="decimal" maxlength="24" autocomplete="off" spellcheck="false" placeholder="31.7683">
+        <label for="geo-longitude" class="field-label">Longitude (−180 to 180)</label>
+        <input id="geo-longitude" type="text" inputmode="decimal" maxlength="24" autocomplete="off" spellcheck="false" placeholder="35.2137">
+        <p class="hint">Enter coordinates yourself. No device location permission is requested; scanning support for geo: links depends on the app.</p>
       </div>
       <p class="hint" id="content-hint">The content is prepared locally and is never sent to a server.</p>
       <div class="byte-row"><span>UTF-8 payload</span><span id="bytes">0 / 78 bytes</span></div>

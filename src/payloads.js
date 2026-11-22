@@ -91,11 +91,31 @@ export function smsPayload({number, body = ''}) {
   return 'sms:' + recipient + (content ? '?body=' + encodeURIComponent(content) : '');
 }
 
+/** Geo URI (RFC 5870 subset): coordinates are entered explicitly by the user.
+ * This tool never reads device location or queries a map service.
+ */
+function coordinate(value, label, minimum, maximum) {
+  const entered = field(value, label, 24).trim();
+  if (!/^-?(?:\d{1,3}(?:\.\d{1,6})?|\.\d{1,6})$/u.test(entered)) {
+    throw new RangeError(label + ' must be a decimal coordinate with at most six fractional digits.');
+  }
+  const numeric = Number(entered);
+  if (!Number.isFinite(numeric) || numeric < minimum || numeric > maximum) {
+    throw new RangeError(label + ' is outside the geographic coordinate range.');
+  }
+  return String(Object.is(numeric, -0) ? 0 : numeric);
+}
+export function geoPayload({latitude, longitude}) {
+  return 'geo:' + coordinate(latitude, 'Latitude', -90, 90) + ',' +
+    coordinate(longitude, 'Longitude', -180, 180);
+}
+
 export function buildQrPayload(kind, values) {
   if (kind === 'text') return field(values?.text, 'Text', 2000);
   if (kind === 'wifi') return wifiPayload(values);
   if (kind === 'email') return emailPayload(values);
   if (kind === 'phone') return phonePayload(values);
   if (kind === 'sms') return smsPayload(values);
+  if (kind === 'geo') return geoPayload(values);
   throw new RangeError('Unsupported QR content type.');
 }

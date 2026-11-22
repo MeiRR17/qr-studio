@@ -8,7 +8,7 @@ From a clone of the repository, serve static files:
 
     python3 -m http.server 8000
 
-Open http://localhost:8000. A local HTTP server or HTTPS static hosting supports the native JavaScript ES modules. The app defaults to a sample URL; replace it with your text and generate a code. Alternatively choose **Wi-Fi network**, **Email message**, **Telephone call**, or **Text message (SMS)** and fill the structured fields.
+Open http://localhost:8000. A local HTTP server or HTTPS static hosting supports the native JavaScript ES modules. The app defaults to a sample URL; replace it with your text and generate a code. Alternatively choose **Wi-Fi network**, **Email message**, **Telephone call**, **Text message (SMS)**, or **Geographic location** and fill the structured fields.
 
 ## Implementation
 
@@ -20,6 +20,7 @@ Open http://localhost:8000. A local HTTP server or HTTPS static hosting supports
 - Local color-legibility estimate computed from sRGB relative luminance and contrast, including an inversion warning and a one-click return to high-contrast defaults. This is only a heuristic, not an ISO QR-scanning certification.
 - Structured Wi-Fi QR payloads with security type (WPA/WPA2, WEP or open), optional hidden SSID, and proper escaping for delimiters.
 - SMS QR payloads using an `sms:` URI and an optional URI-encoded `?body=` query parameter. Both SMS and telephone QR types accept the same conservative phone-number formats. The QR only requests that compatible devices open a compose view; it never sends a message. SMS scanner support varies by platform. Message body is single-line and capped at 250 characters before the global 78-byte QR limit.
+- Geographic-location QR payloads use a minimal `geo:latitude,longitude` URI (RFC 5870 subset), with manually entered decimal coordinates, range checking (latitude ±90°, longitude ±180°), and up to six fractional digits. No GPS or browser location permission is used; QR scanner handling depends on platform.
 - Telephone call QR payloads using a `tel:` URI. Accepts conservatively normalized international E.164 (`+` and up to 15 digits) or local Israeli 0-prefixed 9–10-digit numbers. Removes spaces, hyphens and parentheses; rejects extensions, URI query/fragment markers and control characters. A QR does not check that a number is allocated or reachable.
 - Email QR payloads using a `mailto:` URI with an optional encoded subject and body. Recipient validation accepts a deliberately conservative, mailto-safe address subset (no query/fragment separators) to avoid injected URI parameters; unusual email syntaxes may be rejected.
 - The 78-byte limit applies to the **entire encoded payload**, including Wi-Fi/email protocol prefixes and escaping, not just the visible input fields.
@@ -42,7 +43,7 @@ The app does not save your input in localStorage, cookies or analytics. When the
 ## Files
 
 - `src/qr.js` — byte-mode encoder, Reed–Solomon codewords, QR matrix placement and SVG export
-- `src/payloads.js` — local Wi-Fi, email, telephone and SMS QR content builders (no networking)
+- `src/payloads.js` — local Wi-Fi, email, telephone, SMS and geographic-location QR content builders (no networking)
 - `src/contrast.js` — isolated palette contrast advisory and accessibility-friendly warnings
 - `index.html` — browser interface
 - `app.js` — local input, preview and SVG/PNG download

@@ -26,6 +26,10 @@ function payload() {
       number:$('sms-number').value,
       body:$('sms-body').value,
     });
+    case 'geo': return buildQrPayload('geo', {
+      latitude:$('geo-latitude').value,
+      longitude:$('geo-longitude').value,
+    });
     default: throw new RangeError('Invalid content type.');
   }
 }
@@ -35,6 +39,7 @@ function selectContentType() {
   $('email-form').hidden = contentType.value !== 'email';
   $('phone-form').hidden = contentType.value !== 'phone';
   $('sms-form').hidden = contentType.value !== 'sms';
+  $('geo-form').hidden = contentType.value !== 'geo';
   $('wifi-password-wrap').hidden = $('wifi-security').value === 'nopass';
   discard();
   refreshBytes();
@@ -102,7 +107,8 @@ function changedInput() {
 }
 contentType.addEventListener('change', selectContentType);
 for(const id of ['payload','wifi-ssid','wifi-password','wifi-hidden','wifi-security',
-  'email-to','email-subject','email-body','phone-number','sms-number','sms-body']) {
+  'email-to','email-subject','email-body','phone-number','sms-number','sms-body',
+  'geo-latitude','geo-longitude']) {
   $(id).addEventListener('input', changedInput);
 }
 $('wifi-security').addEventListener('change', () => {
