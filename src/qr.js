@@ -17,6 +17,27 @@ const capacityBytes = version => CAPACITY[version].data - 2;
 const versionForBytes = byteCount =>
   QR_VERSIONS.find(version => byteCount <= capacityBytes(version)) ?? null;
 
+// TextEncoder silently substitutes U+FFFD for an unpaired UTF-16 surrogate.
+// Reject such input before sizing OR encoding: QR bytes (especially in Wi-Fi
+// credentials and contact fields) must not silently differ from user input.
+function utf8PayloadBytes(input) {
+  if (typeof input !== 'string') throw new TypeError('QR payload must be text.');
+  if (input.length > 10_000) throw new RangeError('QR capacity input is too long.');
+  for (let i = 0; i < input.length; i++) {
+    const unit = input.charCodeAt(i);
+    if (unit >= 0xd800 && unit <= 0xdbff) {
+      const following = input.charCodeAt(i + 1);
+      if (!(following >= 0xdc00 && following <= 0xdfff)) {
+        throw new RangeError('QR payload contains an unpaired UTF-16 surrogate.');
+      }
+      i++; // A valid supplementary Unicode code point occupies two units.
+    } else if (unit >= 0xdc00 && unit <= 0xdfff) {
+      throw new RangeError('QR payload contains an unpaired UTF-16 surrogate.');
+    }
+  }
+  return new TextEncoder().encode(input);
+}
+
 /**
  * Capacity preview without constructing a QR matrix or exposing the payload.
  * Uses the identical byte-mode version rule as encodeQr() and counts UTF-8,
@@ -24,9 +45,7 @@ const versionForBytes = byteCount =>
  * that a camera can decode the generated image.
  */
 export function qrCapacityInfo(input) {
-  if (typeof input !== 'string') throw new TypeError('QR payload must be text.');
-  if (input.length > 10_000) throw new RangeError('QR capacity input is too long.');
-  const bytes = new TextEncoder().encode(input).length;
+  const bytes = utf8PayloadBytes(input).length;
   const version = bytes ? versionForBytes(bytes) : null;
   return {
     bytes,
@@ -215,7 +234,7 @@ function cloneModules(modules){return modules.map(row=>row.slice());}
  */
 export function encodeQr(input) {
   if(typeof input!=='string'||!input.length)throw new TypeError('Enter nonempty text.');
-  const bytes=new TextEncoder().encode(input);
+  const bytes=utf8PayloadBytes(input);
   const version=versionForBytes(bytes.length); // shared with capacity preflight
   if(!version)throw new RangeError('Text exceeds the version 4-L capacity (78 UTF-8 bytes).');
   const codewords=encodeData(bytes,version);

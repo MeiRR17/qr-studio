@@ -77,10 +77,13 @@ function refreshBytes(){
         estimate.remainingBytes+' byte(s) free within its '+
         estimate.versionCapacityBytes+'-byte capacity. Scanner support is not guaranteed.';
     }
-  } catch {
+  } catch(error) {
     $('bytes').textContent='— / 78 bytes';
     $('bytes').className='';
-    advisory.textContent='Complete valid content fields to estimate the QR version.';
+    // The message is fixed, never echoed from a user-supplied payload.
+    advisory.textContent=error?.message==='QR payload contains an unpaired UTF-16 surrogate.'
+      ? 'Invalid Unicode input: an unpaired surrogate would be silently replaced during UTF-8 encoding. Correct the text before generating.'
+      : 'Complete valid content fields to estimate the QR version.';
   }
 }
 function discard(){
