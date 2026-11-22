@@ -106,6 +106,31 @@ function save(data,name,type){
   setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 $('generate').addEventListener('click',generate);
+// Explicit privacy cleanup: clear fields across ALL content types, not just
+// the currently visible form. Invalidate asynchronous PNG jobs before any UI
+// updates, then erase the previously rendered SVG and encoded matrix.
+$('clear-content').addEventListener('click', () => {
+  discard();
+  for (const id of [
+    'payload', 'wifi-ssid', 'wifi-password',
+    'email-to', 'email-subject', 'email-body',
+    'phone-number', 'sms-number', 'sms-body',
+    'geo-latitude', 'geo-longitude',
+    'contact-name', 'contact-phone', 'contact-email',
+  ]) $(id).value = '';
+  $('wifi-hidden').checked = false;
+  $('wifi-security').value = 'WPA';
+  contentType.value = 'text';
+  $('free-form').hidden = false;
+  for (const id of ['wifi-form','email-form','phone-form','sms-form','geo-form','contact-form']) {
+    $(id).hidden = true;
+  }
+  $('wifi-password-wrap').hidden = false;
+  lastRenderedStyle = '';
+  refreshBytes();
+  info('All QR content fields and the previous preview were cleared locally. Existing downloads and clipboard contents cannot be recalled.');
+  $('payload').focus();
+});
 function changedInput() {
   refreshBytes();
   discard();
