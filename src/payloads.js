@@ -61,7 +61,7 @@ export function emailPayload({recipient, subject = '', body = ''}) {
  * Formatting spaces, parentheses and hyphens are discarded; extension,
  * fragment and query delimiters are never accepted.
  */
-export function phonePayload({number}) {
+function normalizedPhone(number) {
   const entered = field(number, 'Phone number', 40).trim();
   if (!entered || /[^+0-9 ()-]/u.test(entered)) {
     throw new RangeError('Enter a phone number without extensions or URI parameters.');
@@ -70,7 +70,25 @@ export function phonePayload({number}) {
   if (!/^(?:\+[1-9]\d{1,14}|0\d{8,9})$/u.test(normalized)) {
     throw new RangeError('Use a +country-code number (E.164) or an Israeli local number beginning with 0.');
   }
-  return 'tel:' + normalized;
+  return normalized;
+}
+
+export function phonePayload({number}) {
+  return 'tel:' + normalizedPhone(number);
+}
+
+/**
+ * RFC 5724-style SMS URI for scanners that support SMS composition.
+ * Encoding a QR never sends a message; recipients and body are URI components.
+ * The final QR encoder enforces the full byte-mode payload size limit.
+ */
+export function smsPayload({number, body = ''}) {
+  const recipient = normalizedPhone(number);
+  const content = field(body, 'SMS message', 250);
+  if (/[\r\n]/u.test(content)) {
+    throw new RangeError('SMS message must be a single line.');
+  }
+  return 'sms:' + recipient + (content ? '?body=' + encodeURIComponent(content) : '');
 }
 
 export function buildQrPayload(kind, values) {
@@ -78,5 +96,6 @@ export function buildQrPayload(kind, values) {
   if (kind === 'wifi') return wifiPayload(values);
   if (kind === 'email') return emailPayload(values);
   if (kind === 'phone') return phonePayload(values);
+  if (kind === 'sms') return smsPayload(values);
   throw new RangeError('Unsupported QR content type.');
 }
