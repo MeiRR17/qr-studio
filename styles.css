@@ -4,3 +4,14 @@
 
 /* Informational palette legibility heuristic, not a scanning certification. */
 .contrast-row{border:1px solid #dce8f5;border-radius:10px;background:#f7faff;padding:13px 15px;margin:-4px 0 17px;display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap}.contrast-row strong{font-size:12px;color:#35577b}.contrast-row p{font-size:11px;line-height:1.65;margin:6px 0 0;max-width:440px}.contrast-good{color:#16794c}.contrast-warning{color:#a66b22}.contrast-row .button{font-size:11px;padding:10px 12px}.contrast-row .button:focus-visible{outline:2px solid #2b71ed;outline-offset:2px}@media(max-width:540px){.contrast-row .button{width:100%}}
+
+/* Bounded batch QR previews; each code has an explicit SVG download. */
+.stage:has(.batch-card){display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;text-align:start;padding:14px;overflow:auto}
+.batch-card{display:grid;justify-items:center;gap:8px;min-width:0;padding:12px;border:1px solid #dce6f1;border-radius:10px;background:#fff}
+.batch-card h3{font-size:12px;margin:0;text-align:center}
+.batch-code{width:min(100%,190px);aspect-ratio:1;display:grid;place-items:center}
+.batch-code svg{display:block;width:100%;height:auto;max-height:190px}
+.batch-card .button{font-size:11px;padding:8px 10px}
+.batch-errors{grid-column:1/-1;margin:8px 0;padding:12px;border:1px solid #e9d8ae;border-radius:9px;background:#fff9ed;color:#866328;font-size:12px}
+.batch-errors ul{margin:7px 0 0;padding-inline-start:20px}
+@media(prefers-color-scheme:dark){.batch-card{background:#1b2b43;border-color:#38516c}.batch-errors{background:#392f1c;color:#f1d69b;border-color:#6a5527}}

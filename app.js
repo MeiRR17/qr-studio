@@ -1,8 +1,10 @@
 import { encodeQr, toSvg, qrCapacityInfo } from './src/qr.js';
 import { buildQrPayload } from './src/payloads.js';
 import { qrContrastAdvisory } from './src/contrast.js';
+import { generateQrBatch } from './src/batch.js';
 const $=id=>document.getElementById(id);
 let encoded=null, currentSvg='';
+let batchItems=null;
 let revision=0; // Invalidate pending image exports when content or styling changes.
 const contentType = $('content-type');
 function payload() {
@@ -30,6 +32,7 @@ function payload() {
       latitude:$('geo-latitude').value,
       longitude:$('geo-longitude').value,
     });
+    case 'batch': throw new RangeError('Use batch generation for multiple text lines.');
     case 'contact': return buildQrPayload('contact', {
       name:$('contact-name').value,
       phone:$('contact-phone').value,
@@ -46,6 +49,7 @@ function selectContentType() {
   $('sms-form').hidden = contentType.value !== 'sms';
   $('geo-form').hidden = contentType.value !== 'geo';
   $('contact-form').hidden = contentType.value !== 'contact';
+  $('batch-form').hidden = contentType.value !== 'batch';
   $('wifi-password-wrap').hidden = $('wifi-security').value === 'nopass';
   discard();
   refreshBytes();
@@ -63,6 +67,13 @@ function updateContrast() {
 
 function refreshBytes(){
   const advisory=$('capacity-advisory');
+  if(contentType.value==='batch'){
+    const lines=$('batch-payload').value.split(/\r?\n/u).filter(line=>line.trim()).length;
+    $('bytes').textContent=lines+' / 20 items';
+    $('bytes').className=lines>20?'over-limit':'';
+    advisory.textContent=lines ? 'Each non-empty line is encoded as its own QR code; each line has the 78-byte UTF-8 limit.' : 'Paste up to 20 short lines. Blank lines are ignored.';
+    return;
+  }
   try {
     const estimate=qrCapacityInfo(payload());
     $('bytes').textContent=estimate.bytes+' / '+estimate.maxBytes+' bytes';
@@ -88,12 +99,44 @@ function refreshBytes(){
 }
 function discard(){
   revision++;
-  encoded=null;currentSvg='';$('svg').disabled=$('png').disabled=true;
+  encoded=null;currentSvg='';batchItems=null;$('svg').disabled=$('png').disabled=true;
   // A stale preview may expose a prior Wi-Fi password even with export disabled.
   $('stage').replaceChildren();
   $('version').textContent=$('dimensions').textContent='—';
 }
+function generateBatch(){
+  discard();
+  try{
+    const result=generateQrBatch($('batch-payload').value, {
+      scale:Number($('scale').value), dark:$('dark').value, light:$('light').value,
+    });
+    batchItems=result.items;
+    const stage=$('stage');stage.replaceChildren();
+    for(const item of result.items){
+      const card=document.createElement('article');card.className='batch-card';
+      const heading=document.createElement('h3');heading.textContent='Line '+item.line+' · Version '+item.qr.version+' · '+item.qr.bytes+' bytes';
+      const preview=document.createElement('div');preview.className='batch-code';preview.innerHTML=item.svg;
+      const download=document.createElement('button');download.type='button';download.className='button secondary';download.textContent='Download SVG';
+      download.addEventListener('click',()=>save(item.svg,'qr-line-'+String(item.line).padStart(2,'0')+'.svg','image/svg+xml;charset=utf-8'));
+      card.append(heading,preview,download);stage.append(card);
+    }
+    if(result.errors.length){
+      const errors=document.createElement('div');errors.className='batch-errors';
+      const title=document.createElement('strong');title.textContent='Lines not generated';errors.append(title);
+      const list=document.createElement('ul');
+      for(const error of result.errors){const li=document.createElement('li');li.textContent='Line '+error.line+': '+error.reason;list.append(li);}
+      errors.append(list);stage.append(errors);
+    }
+    $('version').textContent=result.items.length+' / '+result.totalLines;
+    $('level').textContent='L';$('dimensions').textContent='Separate codes';
+    $('svg').disabled=$('png').disabled=true;revision++;
+    info('Generated '+result.items.length+' of '+result.totalLines+' QR codes locally.'+(result.errors.length?' '+result.errors.length+' line(s) need attention.':''),result.items.length===0);
+  }catch(error){
+    discard();const detail=document.createElement('p');detail.textContent=error.message;$('stage').append(detail);info(error.message,true);
+  }
+}
 function generate(){
+  if(contentType.value==='batch'){generateBatch();return;}
   try{
     encoded=encodeQr(payload());
     currentSvg=toSvg(encoded,{
@@ -131,7 +174,7 @@ $('clear-content').addEventListener('click', () => {
     'email-to', 'email-subject', 'email-body',
     'phone-number', 'sms-number', 'sms-body',
     'geo-latitude', 'geo-longitude',
-    'contact-name', 'contact-phone', 'contact-email',
+    'contact-name', 'contact-phone', 'contact-email', 'batch-payload',
   ]) $(id).value = '';
   $('wifi-hidden').checked = false;
   $('wifi-security').value = 'WPA';
@@ -152,7 +195,7 @@ function changedInput() {
   info('Content changed. Generate the updated QR code.');
 }
 contentType.addEventListener('change', selectContentType);
-for(const id of ['payload','wifi-ssid','wifi-password','wifi-hidden','wifi-security',
+for(const id of ['payload','wifi-ssid','wifi-password','wifi-hidden','wifi-security','batch-payload',
   'email-to','email-subject','email-body','phone-number','sms-number','sms-body',
   'geo-latitude','geo-longitude','contact-name','contact-phone','contact-email']) {
   $(id).addEventListener('input', changedInput);
@@ -168,7 +211,9 @@ let lastRenderedStyle='';
 function refreshStyle() {
   updateContrast();
   const style=[$('dark').value,$('light').value,$('scale').value].join('|');
-  if (!encoded || style === lastRenderedStyle) return;
+  if (style === lastRenderedStyle) return;
+  if(contentType.value==='batch' && batchItems){generate();return;}
+  if (!encoded) return;
   generate();
 }
 for(const id of ['dark','light']){

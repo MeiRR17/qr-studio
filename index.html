@@ -23,7 +23,13 @@
         <option value="sms">Text message (SMS)</option>
         <option value="geo">Geographic location</option>
         <option value="contact">Contact card (MECARD)</option>
+        <option value="batch">Batch text lines</option>
       </select>
+      <div id="batch-form" class="payload-fields" hidden>
+        <label for="batch-payload" class="field-label">One QR per line (up to 20)</label>
+        <textarea id="batch-payload" rows="7" maxlength="20000" spellcheck="false" placeholder="https://example.org&#10;Hello world&#10;שלום"></textarea>
+        <p class="hint">Blank lines are ignored. Each non-empty line is a separate QR code with its own 78-byte UTF-8 limit. Invalid lines are reported by line number only.</p>
+      </div>
       <div id="free-form" class="payload-fields">
         <label for="payload" class="field-label">Content</label>
         <textarea id="payload" rows="6" spellcheck="false" placeholder="https://example.org" maxlength="300"></textarea>

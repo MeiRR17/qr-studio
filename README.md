@@ -8,11 +8,12 @@ From a clone of the repository, serve static files:
 
     python3 -m http.server 8000
 
-Open http://localhost:8000. A local HTTP server or HTTPS static hosting supports the native JavaScript ES modules. The app defaults to a sample URL; replace it with your text and generate a code. Alternatively choose **Wi-Fi network**, **Email message**, **Telephone call**, **Text message (SMS)**, **Geographic location**, or **Contact card (MECARD)** and fill the structured fields.
+Open http://localhost:8000. A local HTTP server or HTTPS static hosting supports the native JavaScript ES modules. The app defaults to a sample URL; replace it with your text and generate a code. Alternatively choose **Wi-Fi network**, **Email message**, **Telephone call**, **Text message (SMS)**, **Geographic location**, **Contact card (MECARD)** or **Batch text lines**. Batch mode creates one QR per non-empty line and lets you download each SVG separately.
 
 ## Implementation
 
 - UTF-8 byte-mode encoding for QR Code **versions 1–4** at error correction level **L** (approximately 7% codeword recovery under typical error conditions).
+- **Batch text mode:** generate up to 20 independent QR codes from newline-separated text. Blank lines are skipped; each line is validated and encoded separately against the same 78-byte UTF-8 limit. Successful lines remain downloadable when another line is invalid or oversized. Errors identify line numbers and fixed reasons only; payload contents are never copied into diagnostics. Batch artwork responds to palette and module-size changes, and each SVG is downloaded separately (no archive or combined QR is created).
 - Maximum UTF-8 payload sizes: v1 17 bytes, v2 32 bytes, v3 53 bytes, v4 78 bytes.
 - **Strict Unicode handling:** preflight and QR generation share one UTF-8 encoder that rejects unpaired UTF-16 surrogate code units (malformed Unicode) instead of allowing `TextEncoder` to silently substitute `U+FFFD`. This prevents an unnoticed QR payload change, particularly for credentials or contact details. Valid supplementary characters such as emoji remain supported and count as their full UTF-8 bytes. Both paths now enforce a 10,000 UTF-16-code-unit input bound before encoding, in addition to the 78-byte QR v4-L limit. Error messages never echo the entered content.
 - **Live QR capacity preflight:** before generation, the interface shows the smallest expected supported version (`1–4`, level L) and how many UTF-8 bytes remain within that version's actual capacity. For oversized content it shows the exact byte count exceeding v4-L's 78-byte ceiling. Structured content counts all protocol prefixes and escaping by using its final built payload. Invalid or incomplete content reports an unavailable estimate instead of guessing. It does not store or display entered secrets, construct a matrix, or require a scanner/camera/network permission. The generated QR still needs practical scanner verification.
@@ -49,6 +50,7 @@ The app does not save your input in localStorage, cookies or analytics. When the
 - `src/qr.js` — byte-mode capacity preflight, encoder, Reed–Solomon codewords, QR matrix placement and SVG export
 - `src/payloads.js` — local Wi-Fi, email, telephone, SMS, geographic-location and MECARD contact QR content builders (no networking)
 - `src/contrast.js` — isolated palette contrast advisory and accessibility-friendly warnings
+- `src/batch.js` — bounded newline-separated batch QR encoding with per-line diagnostics
 - `index.html` — browser interface
 - `app.js` — local input, preview and SVG/PNG download
 - `styles.css` — responsive styling
