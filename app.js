@@ -129,6 +129,7 @@ function generateBatch(){
     }
     $('version').textContent=result.items.length+' / '+result.totalLines;
     $('level').textContent='L';$('dimensions').textContent='Separate codes';
+    lastRenderedStyle=[$('dark').value,$('light').value,$('scale').value].join('|');
     $('svg').disabled=$('png').disabled=true;revision++;
     info('Generated '+result.items.length+' of '+result.totalLines+' QR codes locally.'+(result.errors.length?' '+result.errors.length+' line(s) need attention.':''),result.items.length===0);
   }catch(error){
